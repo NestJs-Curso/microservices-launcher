@@ -39,7 +39,7 @@ El sistema está compuesto por tres microservicios principales, comunicados medi
         └──────┬─────┬─────┘
                │     │
          NATS  │     │  NATS
-        ┌──────▼──┐ ┌─▼────────┐
+        ┌──────▼──┐ ┌▼─────────┐
         │orders-ms│ │products-ms│
         └─────────┘ └──────────┘
 ```
