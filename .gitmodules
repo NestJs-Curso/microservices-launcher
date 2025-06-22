@@ -7,3 +7,6 @@
 [submodule "products-ms"]
 	path = products-ms
 	url = https://github.com/NestJs-Curso/products-ms.git
+[submodule "payments-ms"]
+	path = payments-ms
+	url = https://github.com/NestJs-Curso/payments-ms.git
