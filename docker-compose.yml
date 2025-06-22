@@ -35,7 +35,8 @@ services:
     build: ./orders-ms
     volumes:
       - ./orders-ms/src:/usr/src/app/src
-    command: npm run start:dev
+    command:
+      ["/bin/sh", "-c", "./wait-for-it.sh orders-db 5432 -- npm run start:dev"]
     environment:
       - PORT=3002
       - NATS_SERVERS=nats://nats-server:4222
