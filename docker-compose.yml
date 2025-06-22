@@ -45,6 +45,21 @@ services:
       - orders-db
       - nats-server
 
+  payments-service:
+    build: ./payments-ms
+    volumes:
+      - ./payments-ms/src:/usr/src/app/src
+    command: npm run start:dev
+    environment:
+      - PORT=${PAYMENTS_MS_PORT}
+      - NATS_SERVERS=nats://nats-server:4222
+      - STRIPE_SECRET= ${STRIPE_SECRET}
+      - STRIPE_SUCCESS_URL= ${STRIPE_SUCCESS_URL}
+      - STRIPE_CANCEL_URL= ${STRIPE_CANCEL_URL}
+      - STRIPE_ENDPOINT_SECRET= ${STRIPE_ENDPOINT_SECRET}
+    depends_on:
+      - nats-server
+
   orders-db:
     container_name: orders-db
     image: postgres:latest
