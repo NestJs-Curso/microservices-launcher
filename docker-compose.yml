@@ -87,3 +87,19 @@ services:
       - nats-server
     ports:
       - ${PAYMENTS_MS_PORT}:${PAYMENTS_MS_PORT}
+
+  # Servicio de Hookdeck para webhooks
+  hookdeck:
+    image: hookdeck/hookdeck-cli:latest
+    entrypoint: ["/bin/sh"]
+    command: -c "hookdeck ci --api-key ${HOOCKED_TOKEN} && hookdeck listen http://payments-service:3003 ${HOOCKED_SOURCE}"
+    depends_on:
+      - client-gateway
+      - products-service
+      - orders-service
+      - payments-service
+    environment:
+      - HOOKDECK_API_KEY=${HOOCKED_TOKEN} # Usa tu token real
+      - HOOKDECK_CONFIG_DIR=/data
+    volumes:
+      - ./hookdeck-data:/data
