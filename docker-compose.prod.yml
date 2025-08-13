@@ -9,20 +9,6 @@ services:
   nats-server:
     image: nats:latest
 
-  # Base de datos para órdenes
-  #orders-db:
-  #  container_name: orders-db
-  #  image: postgres:latest
-  #  restart: always
-  #  volumes:
-  #    - ./orders-ms/postgres:/var/lib/postgresql/data
-  #  ports:
-  #    - "5432:5432"
-  #  environment:
-  #    POSTGRES_USER: postgres
-  #    POSTGRES_PASSWORD: postgres
-  #    POSTGRES_DB: orders_db
-
   # --------------------
   # Microservicios
   # --------------------
@@ -54,19 +40,21 @@ services:
     depends_on:
       - nats-server
 
-  ## Microservicio de órdenes
-  #orders-service:
-  #  build: ./orders-ms
-  #  volumes:
-  #    - ./orders-ms/src:/usr/src/app/src
-  #  command: ./wait-for-it.sh orders-db 5432 -- npm run start:dev
-  #  environment:
-  #    - PORT=3002
-  #    - NATS_SERVERS=nats://nats-server:4222
-  #    - DATABASE_URL=postgresql://postgres:postgres@orders-db:5432/orders_db?schema=public
-  #  depends_on:
-  #    - orders-db
-  #    - nats-server
+  # Microservicio de órdenes
+  orders-service:
+    build:
+      context: ./orders-ms
+      dockerfile: dockerfile.prod
+      args:
+        - ORDERS_DB_URL=${ORDERS_DB_URL}
+    image: orders-service
+    environment:
+      - PORT=3002
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=${ORDERS_DB_URL}
+    depends_on:
+      - nats-server
+    # command: sh -c "npx prisma migrate deploy && node dist/main.js"
 
   # Microservicio de pagos
   payments-service:
