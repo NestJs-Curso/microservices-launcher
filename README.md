@@ -15,6 +15,8 @@ Este repositorio implementa una arquitectura de microservicios moderna utilizand
 - [Ejemplo de .env](#ejemplo-de-env)
 - [Migraciones de Base de Datos](#migraciones-de-base-de-datos)
 - [Endpoints Principales](#endpoints-principales)
+- [Hot Reload y Desarrollo](#hot-reload-y-desarrollo)
+- [Integración de Webhooks con Hookdeck](#integración-de-webhooks-con-hookdeck)
 - [Agregar Submódulos de GitHub](#agregar-submodulos-de-github)
 - [Guía de Troubleshooting](#guía-de-troubleshooting)
 - [Guía de Actualización de Submódulos](#guía-de-actualización-de-submódulos)
@@ -27,7 +29,7 @@ Este repositorio implementa una arquitectura de microservicios moderna utilizand
 
 ## Arquitectura
 
-El sistema está compuesto por tres microservicios principales, comunicados mediante NATS (mensajería asíncrona) y expuestos a través de una puerta de enlace (API Gateway):
+El sistema está compuesto por varios microservicios principales, comunicados mediante NATS (mensajería asíncrona) y expuestos a través de una puerta de enlace (API Gateway). Además, se incluye un servicio para la gestión de pagos y un listener de webhooks con Hookdeck:
 
 ```
         ┌────────────────────┐
@@ -36,17 +38,27 @@ El sistema está compuesto por tres microservicios principales, comunicados medi
                   │ HTTP
         ┌─────────▼────────┐
         │  client-gateway │
-        └──────┬─────┬─────┘
-               │     │
-         NATS  │     │  NATS
-        ┌──────▼──┐ ┌▼─────────┐
-        │orders-ms│ │products-ms│
-        └─────────┘ └──────────┘
+        └──────┬─────┬─────┬─────┐
+               │     │     │     │
+         NATS  │     │  NATS│  NATS
+        ┌──────▼──┐ ┌▼─────────┐ ┌▼─────────────┐
+        │orders-ms│ │products-ms│ │payments-ms  │
+        └─────────┘ └──────────┘ └─────────────┘
+
+        ┌─────────────┐
+        │  Hookdeck   │
+        └─────┬───────┘
+              │ Webhook
+        ┌─────▼─────────────┐
+        │client-gateway/api │
+        └───────────────────┘
 ```
 
 - **client-gateway**: API Gateway para clientes externos.
 - **orders-ms**: Microservicio de gestión de órdenes.
 - **products-ms**: Microservicio de gestión de productos.
+- **payments-ms**: Microservicio de pagos (integración con Stripe).
+- **hookdeck**: Servicio para recibir y redirigir webhooks externos (ej. Stripe) hacia el API Gateway.
 
 La comunicación entre los microservicios se realiza principalmente mediante NATS, permitiendo un flujo de mensajes eficiente y desacoplado.
 
@@ -55,11 +67,14 @@ La comunicación entre los microservicios se realiza principalmente mediante NAT
 - **client-gateway**: Orquesta y enruta solicitudes externas hacia los microservicios internos. Expone la API pública (`/api`).
 - **orders-ms**: Gestiona el ciclo de vida de las órdenes (creación, actualización, consulta, etc.). Expone `/orders`.
 - **products-ms**: Administra productos, inventario y operaciones relacionadas. Expone `/productos`.
+- **payments-ms**: Gestiona pagos y la integración con Stripe. Expone `/payments`.
+- **hookdeck**: Listener de webhooks, útil para desarrollo local y pruebas con servicios externos como Stripe.
 
 ## Flujo de Comunicación
 
 - Los clientes interactúan únicamente con `client-gateway`.
 - La comunicación entre microservicios se realiza mediante NATS (mensajería asíncrona) y, en algunos casos, HTTP.
+- Los webhooks externos (ej. Stripe) llegan a Hookdeck y son redirigidos al endpoint correspondiente en el API Gateway.
 - Cada microservicio es responsable de su propia lógica y persistencia.
 
 ## Servicios Incluidos
@@ -67,6 +82,8 @@ La comunicación entre los microservicios se realiza principalmente mediante NAT
 - `client-gateway/`: Puerta de entrada, orquesta y enruta solicitudes.
 - `orders-ms/`: CRUD de órdenes, lógica de negocio y persistencia.
 - `products-ms/`: CRUD de productos, lógica de negocio y persistencia.
+- `payments-ms/`: Gestión de pagos y webhooks de Stripe.
+- `hookdeck/`: Listener de webhooks para desarrollo local.
 
 Cada servicio es independiente, con su propio entorno, dependencias y base de datos (Prisma).
 
@@ -77,6 +94,8 @@ Cada servicio es independiente, con su propio entorno, dependencias y base de da
 - **Prisma ORM**
 - **PostgreSQL**
 - **NATS** (mensajería entre servicios)
+- **Hookdeck** (webhooks)
+- **Stripe** (pagos)
 
 ## Requisitos Previos
 
@@ -97,12 +116,13 @@ Cada servicio es independiente, con su propio entorno, dependencias y base de da
    cp client-gateway/.env.example client-gateway/.env
    cp orders-ms/.env.example orders-ms/.env
    cp products-ms/.env.example products-ms/.env
+   cp payments-ms/.env.example payments-ms/.env
    ```
 3. **Levanta todos los servicios con Docker Compose:**
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
-   Esto construirá y levantará todos los microservicios y bases de datos asociadas.
+   Esto construirá y levantará todos los microservicios, bases de datos asociadas y el listener de webhooks (Hookdeck).
 4. **Ejecución individual (opcional):**
    Si deseas trabajar en un microservicio de forma aislada:
    ```bash
@@ -117,6 +137,7 @@ Cada microservicio requiere su propio archivo `.env` con las siguientes variable
 
 - `DATABASE_URL`: Cadena de conexión a PostgreSQL
 - `NATS_URL`: URL del servidor NATS
+- Variables de Stripe para pagos (`STRIPE_SECRET`, `STRIPE_SUCCESS_URL`, etc.)
 - Otros según la lógica de cada microservicio
 
 Consulta los archivos `.env.example` para más detalles.
@@ -126,6 +147,9 @@ Consulta los archivos `.env.example` para más detalles.
 ```env
 DATABASE_URL=postgresql://usuario:password@localhost:5432/nombre_db
 NATS_URL=nats://localhost:4222
+STRIPE_SECRET=sk_test_xxx
+STRIPE_SUCCESS_URL=http://localhost:3000/success
+STRIPE_CANCEL_URL=http://localhost:3000/cancel
 # Otras variables específicas del microservicio
 ```
 
@@ -136,6 +160,7 @@ Para aplicar las migraciones de Prisma en cada microservicio:
 ```bash
 cd orders-ms/prisma && npx prisma migrate deploy
 cd products-ms/prisma && npx prisma migrate deploy
+cd payments-ms/prisma && npx prisma migrate deploy
 ```
 
 ## Endpoints Principales
@@ -143,8 +168,37 @@ cd products-ms/prisma && npx prisma migrate deploy
 - **client-gateway**: `/api`
 - **orders-ms**: `/orders`
 - **products-ms**: `/productos`
+- **payments-ms**: `/payments`
+- **webhooks**: `/webhooks` (recibe eventos desde Hookdeck)
 
 Consulta la documentación interna de cada microservicio para detalles de endpoints y payloads.
+
+## Hot Reload y Desarrollo
+
+- Todos los microservicios están configurados para hot reload usando `npm run start:dev` y volúmenes Docker.
+- Si usas Docker en Windows/WSL y tienes problemas con el watcher, puedes agregar la opción `--watch --poll=1000` en el comando de NestJS.
+- Los cambios en el código fuente se reflejan automáticamente en los contenedores sin necesidad de reconstruir la imagen.
+
+## Integración de Webhooks con Hookdeck
+
+- El servicio `hookdeck` se levanta automáticamente con Docker Compose.
+- Hookdeck permite recibir webhooks de servicios externos (ej. Stripe) y redirigirlos a tu API Gateway local.
+- Personaliza el comando de Hookdeck en `docker-compose.yml`:
+  ```yaml
+  hookdeck:
+    image: hookdeck/cli:latest
+    command: listen --source stripe --destination http://client-gateway:3000/webhooks/stripe --token tu_token_real
+    depends_on:
+      - client-gateway
+      - products-service
+      - orders-service
+      - payments-service
+    environment:
+      - HOOKDECK_CONFIG_DIR=/data
+    volumes:
+      - ./hookdeck-data:/data
+  ```
+- Reemplaza `stripe` y `tu_token_real` por tus valores reales.
 
 ## Agregar Submódulos de GitHub
 
@@ -173,6 +227,7 @@ Si deseas agregar más microservicios o componentes como submódulos de otros re
 - **Error de conexión a la base de datos:** Verifica las variables `DATABASE_URL` y que el contenedor de PostgreSQL esté corriendo.
 - **Puertos ocupados:** Cambia los puertos en los archivos `.env` o en `docker-compose.yml`.
 - **Problemas con NATS:** Asegúrate de que el servicio NATS esté levantado y la URL sea correcta.
+- **Problemas con Stripe/Hookdeck:** Verifica que el token y la fuente sean correctos y que el endpoint de destino esté disponible.
 - **Dependencias faltantes:** Ejecuta `npm install` en el microservicio correspondiente.
 
 ## Guía de Actualización de Submódulos
