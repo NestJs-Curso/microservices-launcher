@@ -1,6 +1,28 @@
 # Microservicios Launcher con NestJS, Docker y Prisma
 
-Este repositorio implementa una arquitectura de microservicios moderna utilizando [NestJS](https://nestjs.com/), Docker, Prisma ORM y PostgreSQL. El objetivo es proveer una base escalable y mantenible para sistemas distribuidos, facilitando el desarrollo, despliegue y escalabilidad de servicios independientes.
+<p align="center">
+  <img src="https://nestjs.com/img/logo_text.svg" alt="NestJS" height="40"/>
+  <img src="https://raw.githubusercontent.com/docker-library/docs/master/docker/logo.png" alt="Docker" height="40"/>
+  <img src="https://www.prisma.io/images/og-image.png" alt="Prisma" height="40"/>
+  <img src="https://www.postgresql.org/media/img/about/press/elephant.png" alt="PostgreSQL" height="40"/>
+  <img src="https://nats.io/img/nats-icon-color.png" alt="NATS" height="40"/>
+  <img src="https://stripe.com/img/v3/home/twitter.png" alt="Stripe" height="40"/>
+  <img src="https://avatars.githubusercontent.com/u/62738636?s=200&v=4" alt="Hookdeck" height="40"/>
+</p>
+
+<p align="center">
+  <a href="https://nestjs.com"><img src="https://img.shields.io/badge/NestJS-EA2845?style=for-the-badge&logo=nestjs&logoColor=white"/></a>
+  <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white"/></a>
+  <a href="https://www.prisma.io/"><img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white"/></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white"/></a>
+  <a href="https://nats.io/"><img src="https://img.shields.io/badge/NATS-1D8FCD?style=for-the-badge&logo=nats.io&logoColor=white"/></a>
+  <a href="https://stripe.com/"><img src="https://img.shields.io/badge/Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white"/></a>
+  <a href="https://hookdeck.com/"><img src="https://img.shields.io/badge/Hookdeck-1A1A1A?style=for-the-badge&logo=hookdeck&logoColor=white"/></a>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/NestJs-Curso/microservices-launcher/main/.github/stack-diagram.png" alt="Arquitectura Microservicios" width="600"/>
+</p>
 
 ## Tabla de Contenidos
 
@@ -27,7 +49,9 @@ Este repositorio implementa una arquitectura de microservicios moderna utilizand
 - [Contribuciones](#contribuciones)
 - [Licencia](#licencia)
 
-## Arquitectura
+---
+
+# Arquitectura
 
 El sistema está compuesto por varios microservicios principales, comunicados mediante NATS (mensajería asíncrona) y expuestos a través de una puerta de enlace (API Gateway). Además, se incluye un servicio para la gestión de pagos y un listener de webhooks con Hookdeck:
 
