@@ -3,11 +3,9 @@
 <p align="center">
   <img src="https://nestjs.com/img/logo_text.svg" alt="NestJS" height="40"/>
   <img src="https://raw.githubusercontent.com/docker-library/docs/master/docker/logo.png" alt="Docker" height="40"/>
-  <img src="https://www.prisma.io/images/og-image.png" alt="Prisma" height="40"/>
   <img src="https://www.postgresql.org/media/img/about/press/elephant.png" alt="PostgreSQL" height="40"/>
   <img src="https://nats.io/img/nats-icon-color.png" alt="NATS" height="40"/>
   <img src="https://stripe.com/img/v3/home/twitter.png" alt="Stripe" height="40"/>
-  <img src="https://avatars.githubusercontent.com/u/62738636?s=200&v=4" alt="Hookdeck" height="40"/>
 </p>
 
 <p align="center">
